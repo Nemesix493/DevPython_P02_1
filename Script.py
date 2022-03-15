@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from os.path import join
 import csv
+import os
+import pathlib
 
 
 def get_data_from_product_page(url: str) -> dict[str, str]:
@@ -114,6 +116,21 @@ def get_all_category_main_page(url: str = "http://books.toscrape.com/index.html"
     links = soup.find('ul', class_="nav-list").find('ul').find_all('a')
     categories_link = [urljoin(url, link['href']) for link in links]
     return categories_link
+
+
+def recursive_directory_path_builder(path: str) -> None:
+    """
+    Check recursively if each parent exist else it make them
+    :param path: the path of directory
+    :return: None
+    """
+    if os.path.isfile(path):
+        raise ValueError('invalid path, path is not a directory !')
+    elif not os.path.isdir(path):
+        recursive_directory_path_builder(str(pathlib.Path(path).parent))
+        os.mkdir(path)
+
+
 
 
 def main() -> None:

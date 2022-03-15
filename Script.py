@@ -103,18 +103,29 @@ def get_all_book_url_in_category(url: str) -> tuple[str, list[str]]:
     return name, links
 
 
+def get_all_category_main_page(url: str = "http://books.toscrape.com/index.html") -> list[str]:
+    """
+    Scrape the main page of Books to Scrape and extract all the categories main pages
+    :param url:
+    :return: url list of the categories main pages
+    """
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    links = soup.find('ul', class_="nav-list").find('ul').find_all('a')
+    categories_link = [urljoin(url, link['href']) for link in links]
+    return categories_link
+
+
 def main() -> None:
     """
-    Get all book's data of all books in a category form it's main page,
-    http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html,
-    and save them in csv named by the category name
+    Get all book's data of all books in Books to Scrape, http://books.toscrape.com/index.html, and save them in some csv
+    named by the category name
     :return: None
     """
-    category_name, books_url = get_all_book_url_in_category(
-        'http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html'
-    )
-    books_data = [get_data_from_product_page(url) for url in books_url]
-    save_as_csv('', category_name, books_data)
+    for category_main_page_url in get_all_category_main_page():
+        category_name, books_url = get_all_book_url_in_category(category_main_page_url)
+        books_data = [get_data_from_product_page(url) for url in books_url]
+        save_as_csv('', category_name, books_data)
 
 
 if __name__ == '__main__':

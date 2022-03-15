@@ -10,7 +10,7 @@ import csv
 
 def get_data_from_product_page(url: str) -> dict[str, str]:
     """
-    Scrap the url page, extract all the product data and write them
+    Scrape the url page, extract all the product data and write them
     in product_data dict
     :param url: page url
     :return: dict of extracted value
@@ -41,12 +41,12 @@ def get_data_from_product_page(url: str) -> dict[str, str]:
     return product_data
 
 
-def save_as_csv(path: str, name: str, book_data: list) -> None:
+def save_as_csv(path: str, name: str, books_data: list) -> None:
     """
     Save the book data in csv file at path/name.csv
     :param path: directory path of csv file
     :param name: name of csv file
-    :param book_data: list containing dict of book data
+    :param books_data: list containing dict of book data
     :return: None
     """
     with open(join(path, name + '.csv'), 'w', newline='', encoding='utf-8') as csv_file:
@@ -62,16 +62,59 @@ def save_as_csv(path: str, name: str, book_data: list) -> None:
             'number_available',
             'category'], delimiter=',')
         writer.writeheader()
-        writer.writerows(book_data)
+        writer.writerows(books_data)
+
+
+def get_all_product_url(url: str) -> list[str]:
+    """
+    Scrape the url page and extract all the link for book's page
+    :param url: url of a category page
+    :return: a list containing the url of all the book in this category page
+    """
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    products = soup.find_all("article", class_="product_pod")
+    urls = []
+    for product in products:
+        urls.append(urljoin(url, product.find("a")['href']))
+    return urls
+
+
+def get_all_book_url_in_category(url: str) -> tuple[str, list[str]]:
+    """
+    Take the url of category's main page, and return a list of paginated pages url and the category's name, in tuple
+    :param url:
+    :return: tuple of category_name and url list
+    """
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    name = soup.find('div', class_='page-header').find('h1').text.lower()
+    books_number = int(
+        soup.find('form', class_="form-horizontal").find('strong').text
+    )
+    pages_number = books_number//20
+    if books_number % 20 > 0:
+        pages_number += 1
+    links = get_all_product_url(url)
+    for i in range(pages_number-1):
+        links += get_all_product_url(
+            urljoin(url, "page-" + str(i + 2) + ".html")
+        )
+    return name, links
 
 
 def main() -> None:
     """
-    Run the main code of this script
+    Get all book's data of all books in a category form it's main page,
+    http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html,
+    and save them in csv named by the category name
     :return: None
     """
-    product_data = get_data_from_product_page("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
-    save_as_csv('', 'first_page', [product_data])
+    category_name, books_url = get_all_book_url_in_category(
+        'http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html'
+    )
+    books_data = [get_data_from_product_page(url) for url in books_url]
+    save_as_csv('', category_name, books_data)
 
 
 if __name__ == '__main__':

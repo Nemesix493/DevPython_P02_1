@@ -120,7 +120,7 @@ def get_all_category_main_page(url: str = "http://books.toscrape.com/index.html"
 
 def recursive_directory_path_builder(path: str) -> None:
     """
-    Check recursively if each parent exist else it make them
+    Check recursively if each parent exist else it makes them
     :param path: the path of directory
     :return: None
     """
@@ -131,6 +131,14 @@ def recursive_directory_path_builder(path: str) -> None:
         os.mkdir(path)
 
 
+def clean_filename(filename: str) -> str:
+    """
+    Clean filename from any special chars to return a valid filename
+    :param filename: str with potentially special chars
+    :return: str without any special char, just alphanumeric and space
+    """
+    filename = ''.join([char for char in filename if char.isalnum() or char == ' '])
+    return filename
 
 
 def main() -> None:

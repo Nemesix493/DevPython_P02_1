@@ -8,6 +8,8 @@ from os.path import join
 import csv
 import os
 import pathlib
+import wget
+import sys
 
 
 def get_data_from_product_page(url: str) -> dict[str, str]:
@@ -143,14 +145,29 @@ def clean_filename(filename: str) -> str:
 
 def main() -> None:
     """
-    Get all book's data of all books in Books to Scrape, http://books.toscrape.com/index.html, and save them in some csv
-    named by the category name
+    Get all book's data of all books in Books to Scrape, http://books.toscrape.com/index.html, save them in some csv in
+    'csv\' named by the category name and book's image in a 'img\' in a directory named by the category name too, all
+    that files are saved in a root directory named collected_data
     :return: None
     """
+    root_path = join(os.getcwd(), 'collected_data')
+    if len(sys.argv) > 1:
+        root_path = join(
+            os.getcwd(),
+            sys.argv[1],
+            'collected_data'
+        )
+    csv_path = join(root_path, 'csv')
+    recursive_directory_path_builder(csv_path)
     for category_main_page_url in get_all_category_main_page():
         category_name, books_url = get_all_book_url_in_category(category_main_page_url)
         books_data = [get_data_from_product_page(url) for url in books_url]
-        save_as_csv('', category_name, books_data)
+        save_as_csv(csv_path, clean_filename(category_name), books_data)
+        img_path = join(root_path, 'img', clean_filename(category_name))
+        recursive_directory_path_builder(img_path)
+        print(img_path)
+        for book in books_data:
+            wget.download(book['image_url'], join(img_path, clean_filename(book['title']) + '.jpg'))
 
 
 if __name__ == '__main__':

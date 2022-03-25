@@ -127,7 +127,7 @@ def recursive_directory_path_builder(path: str) -> None:
     :return: None
     """
     if os.path.isfile(path):
-        raise ValueError('invalid path, path is not a directory !')
+        raise ValueError('Invalid path, path is not a directory !')
     elif not os.path.isdir(path):
         recursive_directory_path_builder(str(pathlib.Path(path).parent))
         os.mkdir(path)
@@ -162,10 +162,10 @@ def main() -> None:
     for category_main_page_url in get_all_category_main_page():
         category_name, books_url = get_all_book_url_in_category(category_main_page_url)
         books_data = [get_data_from_product_page(url) for url in books_url]
-        save_as_csv(csv_path, clean_filename(category_name), books_data)
         img_path = join(root_path, 'img', clean_filename(category_name))
         recursive_directory_path_builder(img_path)
-        print(img_path)
+        print(f"\n{category_name}:\n   csv -> {csv_path}\n   img -> {img_path}")
+        save_as_csv(csv_path, clean_filename(category_name), books_data)
         for book in books_data:
             wget.download(book['image_url'], join(img_path, clean_filename(book['title']) + '.jpg'))
 
